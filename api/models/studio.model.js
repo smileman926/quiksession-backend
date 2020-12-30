@@ -93,6 +93,7 @@ studioSchema.method({
       "service",
       "equip",
       "engineer",
+      "description",
       "photo",
       "price",
       "roomType",
