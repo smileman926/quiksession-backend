@@ -14,7 +14,7 @@ router.param("bookId", controller.load);
 router
   .route("/")
   .get(authorize(), controller.list)
-  .post(authorize(OWNER), validate(createBook), controller.create);
+  .post(authorize(ARTIST), validate(createBook), controller.create);
 
 router.route('/booked').post(authorize(), controller.createBooked);
 
