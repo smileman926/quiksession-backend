@@ -150,7 +150,7 @@ studioSchema.statics = {
    *
    * @returns {Promise<User[]>}
    */
-  async list({ minPrice, maxPrice, lat, lng, distance, sortBy, sortDir, pageNumber, pageSize, search, type }) {
+  async list({ minPrice, maxPrice, lat, lng, distance, sortBy, sortDir, pageNumber, pageSize, search, type, init }) {
     let match = {};
     pageNumber = (pageNumber ? parseInt(pageNumber) : 0);
     pageSize = (pageSize ? parseInt(pageSize) : 10);
@@ -182,10 +182,7 @@ studioSchema.statics = {
     try {
 
       let sort = { createdAt: 1 };
-      if (sortBy) {
-        sort = {};
-        sort[sortBy] = (sortDir === 'asc') ? 1 : -1;
-      }
+      
 
       let aggregate = [];
       if (lat && lng) {
@@ -197,12 +194,20 @@ studioSchema.statics = {
           }
        });
        if (distance) {
-         if (distance === "200+") {
-          match["calcDistance"] = { "$gte": parseInt(200) };
-         } else {
-           match["calcDistance"] = { "$lte": parseInt(distance) };
+         if (init != "true") {
+           if (distance === "200+") {
+            match["calcDistance"] = { "$gte": parseInt(200) };
+           } else {
+             match["calcDistance"] = { "$lte": parseInt(distance) };
           }
         }
+      }
+      sort = { calcDistance: 1 };
+    }
+
+      if (sortBy) {
+        sort = {};
+        sort[sortBy] = (sortDir === 'asc') ? 1 : -1;
       }
 
       aggregate = aggregate.concat([
@@ -249,17 +254,43 @@ studioSchema.statics = {
       console.log("-------------", JSON.stringify(aggregate));
       
       let studios = await this.aggregate(aggregate);
-      return studios.map((ele) => {
+      const allStudios = studios.map((ele) => {
         const location = { lat: ele.location.coordinates[1], lng: ele.location.coordinates[0] };
         ele.location = location;
         return ele;
       });
+      if (init != "true") {
+        return {
+          allStudios
+        }
+      } else {
+        return {
+          allStudios,
+          initValue: getNearestValue(allStudios[0])
+        }
+      }
     } catch (error) {
       console.log(error);
       throw error;
     }
   },
 };
+
+const getNearestValue = (doc) => {
+  const range = [25 , 50, 75, 100, 125, 150, 175, 200];
+  let retValue = '200+';
+  if (doc && doc.calcDistance) {
+    for (var i=0; i<range.length; i++) {
+      if (doc && doc.calcDistance < range[i]) {
+        retValue = range[i];
+        break;
+      }
+    }
+    return retValue;
+  } else {
+    return '200+';
+  }
+}
 
 /**
  * @typedef Studio
