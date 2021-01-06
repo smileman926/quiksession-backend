@@ -185,6 +185,7 @@ studioSchema.statics = {
       
 
       let aggregate = [];
+      console.log("-----------", lat, lng);
       if (lat && lng) {
         aggregate.push({
           $geoNear: {
